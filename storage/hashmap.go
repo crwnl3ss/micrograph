@@ -1,4 +1,4 @@
-package receiver
+package storage
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 // HashmapStorage ...
 type HashmapStorage struct {
 	sync.Mutex
-	s map[string]node
+	s map[string]DataPoints
 }
 
 func (s *HashmapStorage) GetGrafanaTarggets() []string {
@@ -21,18 +21,13 @@ func (s *HashmapStorage) GetGrafanaTarggets() []string {
 	return targets
 }
 
-type GrafanaDatapoint struct {
-	m  float64
-	ts int64
-}
-
 type GrafanaQueryTarget struct {
 	Target string
 }
 
 type GrafanaQueryResult struct {
-	Target     string
-	Datapoints []GrafanaDatapoint
+	Target string
+	DataPoints
 }
 
 func (s *HashmapStorage) GetGrafanaQuery(from, to int64, targets []GrafanaQueryTarget) []GrafanaQueryResult {
@@ -40,14 +35,15 @@ func (s *HashmapStorage) GetGrafanaQuery(from, to int64, targets []GrafanaQueryT
 	s.Lock()
 	defer s.Unlock()
 	for _, target := range targets {
-		node, ok := s.s[target.Target]
+		datapoints, ok := s.s[target.Target]
 		if !ok {
 			continue
 		}
 		subQueryResult := GrafanaQueryResult{Target: target.Target}
-		for idx := range node.t {
-			if node.t[idx] <= from && node.t[idx] >= to {
-				subQueryResult.Datapoints = append(subQueryResult.Datapoints, GrafanaDatapoint{m: node.m[idx], ts: node.t[idx]})
+		for idx := range datapoints {
+			idxDP := datapoints[idx]
+			if idxDP.ts <= from && idxDP.ts >= to {
+				subQueryResult.DataPoints = append(subQueryResult.DataPoints, DataPoint{})
 			}
 		}
 		queryes = append(queryes, subQueryResult)
@@ -55,18 +51,21 @@ func (s *HashmapStorage) GetGrafanaQuery(from, to int64, targets []GrafanaQueryT
 	return queryes
 }
 
-func (s *HashmapStorage) insert(pp *parsedPackage) error {
+// insert passed Datapoint into slice of Datapoints of passed target
+func (s *HashmapStorage) insertDataPoint(target string, dp DataPoint) error {
 	s.Lock()
 	defer s.Unlock()
-	existedNode, ok := s.s[pp.rawNamespace]
+	datapoints, ok := s.s[target]
+	// there is no datapoints for passed target yet, just create new one
 	if !ok {
-		s.s[pp.rawNamespace] = node{t: []int64{pp.ts}, m: []float64{pp.metric}}
+		s.s[target] = DataPoints{dp}
 		return nil
 	}
-	if existedNode.t[len(existedNode.t)-1] < pp.ts {
-		existedNode.t = append(existedNode.t, pp.ts)
-		existedNode.m = append(existedNode.m, pp.metric)
+	// Datapoins ordered by `ts`, try to add new one at the end
+	if datapoints[len(datapoints)-1].ts < dp.ts {
+		datapoints = append(datapoints, dp)
 		return nil
 	}
+	// otherwise use binary search for new Datapoint
 	return fmt.Errorf("binary search not implemented")
 }

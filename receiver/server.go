@@ -8,10 +8,6 @@ import (
 	"strings"
 )
 
-func processRequest(b []byte, s *HashmapStorage) {
-
-}
-
 // Listen ...
 func Listen(ctx context.Context, laddr string, s *HashmapStorage) error {
 	log.Printf("Listen for incoming udp packages on %s", laddr)
@@ -38,12 +34,12 @@ func Listen(ctx context.Context, laddr string, s *HashmapStorage) error {
 			if bytes.Contains(buf, []byte("\n")) {
 				n -= len([]byte("\n"))
 			}
-			pp, err := parse(buf[:n])
+			t, dp, err := parseUDPRequest(buf[:n])
 			if err != nil {
 				log.Println(err)
 				return
 			}
-			if err := s.insert(pp); err != nil {
+			if err := s.insertDataPoint(t, dp); err != nil {
 				log.Println(err)
 				return
 			}
