@@ -11,6 +11,16 @@ type HashmapStorage struct {
 	s map[string]node
 }
 
+func (s *HashmapStorage) GetGrafanaTarggets() []string {
+	s.Lock()
+	targets := []string{}
+	for k, _ := range s.s {
+		targets = append(targets, k)
+	}
+	s.Unlock()
+	return targets
+}
+
 func (s *HashmapStorage) insert(pp *parsedPackage) error {
 	s.Lock()
 	defer s.Unlock()
