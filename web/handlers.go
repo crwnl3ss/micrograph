@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/crwnl3ss/micrograph/receiver"
 )
@@ -33,10 +34,12 @@ func search(s *receiver.HashmapStorage) func(http.ResponseWriter, *http.Request)
 		defer r.Body.Close()
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
+			log.Println(err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		if err := json.Unmarshal(b, sReq); err != nil {
+			log.Println(err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -44,8 +47,65 @@ func search(s *receiver.HashmapStorage) func(http.ResponseWriter, *http.Request)
 		var sRes SearchResponse = s.GetGrafanaTarggets()
 		br, err := json.Marshal(sRes)
 		if err != nil {
-			w.Write(byte(err))
+			w.Write([]byte(err.Error()))
 			w.WriteHeader(http.StatusBadGateway)
 		}
+		w.Write(br)
+		w.Header().Add("Content-Type", "application/json")
+	}
+}
+
+func (qr *QueryRanges) UnmarshalJSON(b []byte) error {
+	tmp := make(map[string]interface{})
+	if err := json.Unmarshal(b, &tmp); err != nil {
+		return err
+	}
+	from, err := time.Parse("2006-01-02T15:04:05Z", tmp["from"].(string))
+	if err != nil {
+		return err
+	}
+	qr.From = from.Unix()
+	to, err := time.Parse("2006-01-02T15:04:05Z", tmp["to"].(string))
+	qr.To = to.Unix()
+	return nil
+}
+
+type QueryRanges struct {
+	From int64
+	To   int64
+}
+
+type QueryRequest struct {
+	Range   QueryRanges                   `json:"range"`
+	Targets []receiver.GrafanaQueryTarget `json:"targets"`
+}
+
+func query(s *receiver.HashmapStorage) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
+		reqB, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		qr := &QueryRequest{}
+		if err := json.Unmarshal(reqB, qr); err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		queries := s.GetGrafanaQuery(qr.Range.From, qr.Range.To, qr.Targets)
+		resB, err := json.Marshal(queries)
+		if err != nil {
+			log.Println(err)
+		}
+		log.Println(queries)
+		w.Write(resB)
+		w.Header().Add("Content-Type", "application/json")
 	}
 }

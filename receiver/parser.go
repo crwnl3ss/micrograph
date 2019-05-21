@@ -20,19 +20,16 @@ type parsedPackage struct {
 
 func parse(b []byte) (*parsedPackage, error) {
 	bs := bytes.Split(b, metaDelimiter)
-	log.Println("111", string(b))
+	log.Println(string(b))
 	if len(bs) < 3 {
 		return nil, fmt.Errorf("invalid arguments count")
 	}
-	// chekk if space exists
-	spaces := bytes.Split(bs[0], spacesDelimiter)
-	for _, s := range spaces {
-		log.Println(string(s))
-	}
+
 	metric, err := strconv.ParseFloat(string(bs[1]), 10)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse metric")
 	}
+
 	ts, err := strconv.ParseInt(string(bs[2]), 10, 64)
 	log.Println(string(bs[2]), err)
 	if err != nil {

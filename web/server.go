@@ -14,6 +14,7 @@ func Listen(ctx context.Context, laddr string, s *receiver.HashmapStorage) error
 	log.Printf("Listen incoming http requests on: %s", laddr)
 	http.HandleFunc("/", index)
 	http.HandleFunc("/search", search(s))
+	http.HandleFunc("/query", query(s))
 	go func() {
 		<-ctx.Done()
 		srv.Close()

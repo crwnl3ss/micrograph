@@ -41,5 +41,6 @@ func main() {
 		}
 		wg.Done()
 	}()
+	log.Println("wait...")
 	wg.Wait()
 }
