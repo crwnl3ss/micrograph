@@ -2,15 +2,18 @@ package storage
 
 import "log"
 
-type DataPoints []DataPoint
+// DataPoints stores ordered by timestamp collection of Datapoint
+type DataPoints []*DataPoint
 
+// DataPoint stores timeserias data: timestamp and metric
 type DataPoint struct {
-	ts int64
-	m  float64
+	TS   int64
+	Data float64
 }
 
+// Storager is a generic interface for timesereas data storages
 type Storager interface {
-	insertDataPoint(string, DataPoint) bool
+	InsertDataPoint(string, DataPoint) bool
 }
 
 // NewStorage ...

@@ -7,13 +7,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/crwnl3ss/micrograph/receiver"
+	"github.com/crwnl3ss/micrograph/storage"
 )
 
+// SearchRequest ...
 type SearchRequest struct {
 	Target string `json:"target,omitempty"`
 }
 
+// SearchResponse ...
 type SearchResponse []string
 
 // grafana datasorce index handler
@@ -24,7 +26,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 // search returns list of xualified endpoint names (full path to the right
 //most namespace)
 // TODO: build b-tree of namespaces and returns them.
-func search(s *receiver.HashmapStorage) func(http.ResponseWriter, *http.Request) {
+func search(s *storage.HashmapStorage) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			w.WriteHeader(http.StatusBadRequest)
@@ -44,7 +46,7 @@ func search(s *receiver.HashmapStorage) func(http.ResponseWriter, *http.Request)
 			return
 		}
 		log.Println(sReq.Target)
-		var sRes SearchResponse = s.GetGrafanaTarggets()
+		var sRes SearchResponse = s.GetGrafanaTargets()
 		br, err := json.Marshal(sRes)
 		if err != nil {
 			w.Write([]byte(err.Error()))
@@ -55,6 +57,7 @@ func search(s *receiver.HashmapStorage) func(http.ResponseWriter, *http.Request)
 	}
 }
 
+// UnmarshalJSON ...
 func (qr *QueryRanges) UnmarshalJSON(b []byte) error {
 	tmp := make(map[string]interface{})
 	if err := json.Unmarshal(b, &tmp); err != nil {
@@ -70,17 +73,19 @@ func (qr *QueryRanges) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// QueryRanges ...
 type QueryRanges struct {
 	From int64
 	To   int64
 }
 
+// QueryRequest ...
 type QueryRequest struct {
-	Range   QueryRanges                   `json:"range"`
-	Targets []receiver.GrafanaQueryTarget `json:"targets"`
+	Range   QueryRanges                  `json:"range"`
+	Targets []storage.GrafanaQueryTarget `json:"targets"`
 }
 
-func query(s *receiver.HashmapStorage) func(http.ResponseWriter, *http.Request) {
+func query(s *storage.HashmapStorage) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			w.WriteHeader(http.StatusBadRequest)

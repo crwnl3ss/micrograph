@@ -6,10 +6,12 @@ import (
 	"log"
 	"net"
 	"strings"
+
+	"github.com/crwnl3ss/micrograph/storage"
 )
 
 // Listen ...
-func Listen(ctx context.Context, laddr string, s *HashmapStorage) error {
+func Listen(ctx context.Context, laddr string, s *storage.HashmapStorage) error {
 	log.Printf("Listen for incoming udp packages on %s", laddr)
 	pc, err := net.ListenPacket("udp", laddr)
 	if err != nil {
@@ -39,7 +41,7 @@ func Listen(ctx context.Context, laddr string, s *HashmapStorage) error {
 				log.Println(err)
 				return
 			}
-			if err := s.insertDataPoint(t, dp); err != nil {
+			if err := s.InsertDataPoint(t, dp); err != nil {
 				log.Println(err)
 				return
 			}

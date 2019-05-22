@@ -11,7 +11,8 @@ type HashmapStorage struct {
 	s map[string]DataPoints
 }
 
-func (s *HashmapStorage) GetGrafanaTarggets() []string {
+// GetGrafanaTargets ...
+func (s *HashmapStorage) GetGrafanaTargets() []string {
 	s.Lock()
 	targets := []string{}
 	for k := range s.s {
@@ -21,15 +22,18 @@ func (s *HashmapStorage) GetGrafanaTarggets() []string {
 	return targets
 }
 
+// GrafanaQueryTarget ...
 type GrafanaQueryTarget struct {
 	Target string
 }
 
+// GrafanaQueryResult ...
 type GrafanaQueryResult struct {
 	Target string
 	DataPoints
 }
 
+// GetGrafanaQuery ...
 func (s *HashmapStorage) GetGrafanaQuery(from, to int64, targets []GrafanaQueryTarget) []GrafanaQueryResult {
 	queryes := []GrafanaQueryResult{}
 	s.Lock()
@@ -42,8 +46,8 @@ func (s *HashmapStorage) GetGrafanaQuery(from, to int64, targets []GrafanaQueryT
 		subQueryResult := GrafanaQueryResult{Target: target.Target}
 		for idx := range datapoints {
 			idxDP := datapoints[idx]
-			if idxDP.ts <= from && idxDP.ts >= to {
-				subQueryResult.DataPoints = append(subQueryResult.DataPoints, DataPoint{})
+			if idxDP.TS <= from && idxDP.TS >= to {
+				subQueryResult.DataPoints = append(subQueryResult.DataPoints, idxDP)
 			}
 		}
 		queryes = append(queryes, subQueryResult)
@@ -51,8 +55,8 @@ func (s *HashmapStorage) GetGrafanaQuery(from, to int64, targets []GrafanaQueryT
 	return queryes
 }
 
-// insert passed Datapoint into slice of Datapoints of passed target
-func (s *HashmapStorage) insertDataPoint(target string, dp DataPoint) error {
+// InsertDataPoint add passed DataPoint into target's timeserease data
+func (s *HashmapStorage) InsertDataPoint(target string, dp *DataPoint) error {
 	s.Lock()
 	defer s.Unlock()
 	datapoints, ok := s.s[target]
@@ -62,7 +66,7 @@ func (s *HashmapStorage) insertDataPoint(target string, dp DataPoint) error {
 		return nil
 	}
 	// Datapoins ordered by `ts`, try to add new one at the end
-	if datapoints[len(datapoints)-1].ts < dp.ts {
+	if datapoints[len(datapoints)-1].TS < dp.TS {
 		datapoints = append(datapoints, dp)
 		return nil
 	}

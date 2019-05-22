@@ -8,13 +8,13 @@ import (
 	"sync"
 
 	"github.com/crwnl3ss/micrograph/receiver"
+	"github.com/crwnl3ss/micrograph/storage"
 	"github.com/crwnl3ss/micrograph/web"
 )
 
-var s = receiver.NewStorage("hashmap")
+var s = storage.NewStorage("hashmap")
 
 func main() {
-	var laddr = "127.0.0.1:8000"
 	ctx, cancel := context.WithCancel(context.Background())
 
 	signals := make(chan os.Signal)
@@ -27,7 +27,7 @@ func main() {
 	wg := sync.WaitGroup{}
 	go func() {
 		wg.Add(1)
-		err := receiver.Listen(ctx, laddr, s)
+		err := receiver.Listen(ctx, "127.0.0.1:8000", s)
 		if err != nil {
 			log.Println(err)
 		}
@@ -35,7 +35,7 @@ func main() {
 	}()
 	go func() {
 		wg.Add(1)
-		err := web.Listen(ctx, laddr, s)
+		err := web.Listen(ctx, "127.0.0.1:6666", s)
 		if err != nil {
 			log.Println(err)
 		}

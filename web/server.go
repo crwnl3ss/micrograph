@@ -5,11 +5,11 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/crwnl3ss/micrograph/receiver"
+	"github.com/crwnl3ss/micrograph/storage"
 )
 
 // Listen accept incoming http requests
-func Listen(ctx context.Context, laddr string, s *receiver.HashmapStorage) error {
+func Listen(ctx context.Context, laddr string, s *storage.HashmapStorage) error {
 	srv := &http.Server{Addr: laddr, Handler: nil}
 	log.Printf("Listen incoming http requests on: %s", laddr)
 	http.HandleFunc("/", index)

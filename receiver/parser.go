@@ -24,18 +24,17 @@ func parseUDPRequest(b []byte) (string, *storage.DataPoint, error) {
 	bs := bytes.Split(b, metaDelimiter)
 	log.Println(string(b))
 	if len(bs) < 3 {
-		return nil, fmt.Errorf("invalid arguments count")
+		return "", nil, fmt.Errorf("invalid arguments count")
 	}
 
 	metric, err := strconv.ParseFloat(string(bs[1]), 10)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse metric")
+		return "", nil, fmt.Errorf("could not parse metric")
 	}
 
-	ts, err := strconv.ParseInt(string(bs[2]), 10, 64)
+	timestamp, err := strconv.ParseInt(string(bs[2]), 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse timestamp")
+		return "", nil, fmt.Errorf("could not parse timestamp")
 	}
-	return
-	return &parsedPackage{rawNamespace: string(bs[0]), metric: metric, ts: ts}, nil
+	return "", &storage.DataPoint{TS: timestamp, Data: metric}, nil
 }
