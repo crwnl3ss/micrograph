@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"log"
 	"sync"
 )
 
@@ -34,19 +35,20 @@ type GrafanaQueryResult struct {
 }
 
 // GetGrafanaQuery ...
-func (s *HashmapStorage) GetGrafanaQuery(from, to int64, targets []GrafanaQueryTarget) []GrafanaQueryResult {
+func (s *HashmapStorage) GetGrafanaQuery(from, to int64, targets []string) []GrafanaQueryResult {
 	queryes := []GrafanaQueryResult{}
 	s.Lock()
 	defer s.Unlock()
 	for _, target := range targets {
-		datapoints, ok := s.s[target.Target]
+		datapoints, ok := s.s[target]
 		if !ok {
 			continue
 		}
-		subQueryResult := GrafanaQueryResult{Target: target.Target}
+		subQueryResult := GrafanaQueryResult{Target: target}
 		for idx := range datapoints {
 			idxDP := datapoints[idx]
-			if idxDP.TS <= from && idxDP.TS >= to {
+			if idxDP.TS >= from && idxDP.TS <= to {
+				log.Println(idxDP)
 				subQueryResult.DataPoints = append(subQueryResult.DataPoints, idxDP)
 			}
 		}

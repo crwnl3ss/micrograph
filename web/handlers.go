@@ -75,14 +75,19 @@ func (qr *QueryRanges) UnmarshalJSON(b []byte) error {
 
 // QueryRanges ...
 type QueryRanges struct {
-	From int64
-	To   int64
+	From int64 `json:"from"`
+	To   int64 `json:"to"`
+}
+
+// QueryTarget ...
+type QueryTarget struct {
+	Target string `json:"target"`
 }
 
 // QueryRequest ...
 type QueryRequest struct {
-	Range   QueryRanges                  `json:"range"`
-	Targets []storage.GrafanaQueryTarget `json:"targets"`
+	Range   QueryRanges   `json:"range"`
+	Targets []QueryTarget `json:"targets"`
 }
 
 func query(s *storage.HashmapStorage) func(http.ResponseWriter, *http.Request) {
@@ -104,7 +109,11 @@ func query(s *storage.HashmapStorage) func(http.ResponseWriter, *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		queries := s.GetGrafanaQuery(qr.Range.From, qr.Range.To, qr.Targets)
+		targets := []string{}
+		for _, target := range qr.Targets {
+			targets = append(targets, target.Target)
+		}
+		queries := s.GetGrafanaQuery(qr.Range.From, qr.Range.To, targets)
 		resB, err := json.Marshal(queries)
 		if err != nil {
 			log.Println(err)
