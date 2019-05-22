@@ -3,7 +3,6 @@ package receiver
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"strconv"
 
 	"github.com/crwnl3ss/micrograph/storage"
@@ -22,7 +21,6 @@ type parsedPackage struct {
 
 func parseUDPRequest(b []byte) (string, *storage.DataPoint, error) {
 	bs := bytes.Split(b, metaDelimiter)
-	log.Println(string(b))
 	if len(bs) < 3 {
 		return "", nil, fmt.Errorf("invalid arguments count")
 	}
@@ -36,5 +34,5 @@ func parseUDPRequest(b []byte) (string, *storage.DataPoint, error) {
 	if err != nil {
 		return "", nil, fmt.Errorf("could not parse timestamp")
 	}
-	return "", &storage.DataPoint{TS: timestamp, Data: metric}, nil
+	return string(bs[0]), &storage.DataPoint{TS: timestamp, Data: metric}, nil
 }

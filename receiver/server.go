@@ -31,18 +31,18 @@ func Listen(ctx context.Context, laddr string, s *storage.HashmapStorage) error 
 			}
 			return err
 		}
-		log.Printf("Receive message from %s size %d", addr, n)
 		go func() {
 			if bytes.Contains(buf, []byte("\n")) {
 				n -= len([]byte("\n"))
 			}
 			t, dp, err := parseUDPRequest(buf[:n])
+			log.Printf("Receive message from %s size %d body: %s", addr, n, buf[:n])
 			if err != nil {
 				log.Println(err)
 				return
 			}
 			if err := s.InsertDataPoint(t, dp); err != nil {
-				log.Println(err)
+				log.Printf("Could not insert datapoint into storage. Reason: %s", err)
 				return
 			}
 		}()

@@ -17,21 +17,18 @@ func (s *HashmapStorage) GetGrafanaTargets() []string {
 	s.Lock()
 	targets := []string{}
 	for k := range s.s {
+		log.Println(k)
 		targets = append(targets, k)
 	}
 	s.Unlock()
+	log.Println(targets, s.s)
 	return targets
-}
-
-// GrafanaQueryTarget ...
-type GrafanaQueryTarget struct {
-	Target string
 }
 
 // GrafanaQueryResult ...
 type GrafanaQueryResult struct {
-	Target string
-	DataPoints
+	Target     string          `json:"target"`
+	DataPoints [][]interface{} `json:"datapoints"`
 }
 
 // GetGrafanaQuery ...
@@ -44,12 +41,11 @@ func (s *HashmapStorage) GetGrafanaQuery(from, to int64, targets []string) []Gra
 		if !ok {
 			continue
 		}
-		subQueryResult := GrafanaQueryResult{Target: target}
+		subQueryResult := GrafanaQueryResult{Target: target, DataPoints: [][]interface{}{}}
 		for idx := range datapoints {
 			idxDP := datapoints[idx]
 			if idxDP.TS >= from && idxDP.TS <= to {
-				log.Println(idxDP)
-				subQueryResult.DataPoints = append(subQueryResult.DataPoints, idxDP)
+				subQueryResult.DataPoints = append(subQueryResult.DataPoints, []interface{}{idxDP.Data, idxDP.TS})
 			}
 		}
 		queryes = append(queryes, subQueryResult)
@@ -59,11 +55,14 @@ func (s *HashmapStorage) GetGrafanaQuery(from, to int64, targets []string) []Gra
 
 // InsertDataPoint add passed DataPoint into target's timeserease data
 func (s *HashmapStorage) InsertDataPoint(target string, dp *DataPoint) error {
+	log.Println("invoke with:", target, dp)
 	s.Lock()
 	defer s.Unlock()
 	datapoints, ok := s.s[target]
 	// there is no datapoints for passed target yet, just create new one
 	if !ok {
+		log.Println(s.s[target])
+		log.Printf("Create new target: %s", target)
 		s.s[target] = DataPoints{dp}
 		return nil
 	}

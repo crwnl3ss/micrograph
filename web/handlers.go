@@ -25,35 +25,41 @@ func index(w http.ResponseWriter, r *http.Request) {
 
 // search returns list of xualified endpoint names (full path to the right
 //most namespace)
-// TODO: build b-tree of namespaces and returns them.
 func search(s *storage.HashmapStorage) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" {
-			w.WriteHeader(http.StatusBadRequest)
+		if r.Method == "GET" {
+			b, err := json.Marshal(s.GetGrafanaTargets())
+			if err != nil {
+				log.Println(err)
+				w.WriteHeader(http.StatusBadRequest)
+			}
+			w.Write(b)
 			return
 		}
-		sReq := &SearchRequest{}
-		defer r.Body.Close()
-		b, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
+		if r.Method == "POST" {
+			sReq := &SearchRequest{}
+			defer r.Body.Close()
+			b, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				log.Println(err)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			if err := json.Unmarshal(b, sReq); err != nil {
+				log.Println(err)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			log.Println(sReq.Target)
+			var sRes SearchResponse = s.GetGrafanaTargets()
+			br, err := json.Marshal(sRes)
+			if err != nil {
+				w.Write([]byte(err.Error()))
+				w.WriteHeader(http.StatusBadGateway)
+			}
+			w.Write(br)
+			w.Header().Add("Content-Type", "application/json")
 		}
-		if err := json.Unmarshal(b, sReq); err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		log.Println(sReq.Target)
-		var sRes SearchResponse = s.GetGrafanaTargets()
-		br, err := json.Marshal(sRes)
-		if err != nil {
-			w.Write([]byte(err.Error()))
-			w.WriteHeader(http.StatusBadGateway)
-		}
-		w.Write(br)
-		w.Header().Add("Content-Type", "application/json")
 	}
 }
 
@@ -114,11 +120,12 @@ func query(s *storage.HashmapStorage) func(http.ResponseWriter, *http.Request) {
 			targets = append(targets, target.Target)
 		}
 		queries := s.GetGrafanaQuery(qr.Range.From, qr.Range.To, targets)
+		log.Println(queries)
+		json.Marshal(queries)
 		resB, err := json.Marshal(queries)
 		if err != nil {
 			log.Println(err)
 		}
-		log.Println(queries)
 		w.Write(resB)
 		w.Header().Add("Content-Type", "application/json")
 	}

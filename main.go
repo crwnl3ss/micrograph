@@ -35,7 +35,7 @@ func main() {
 	}()
 	go func() {
 		wg.Add(1)
-		err := web.Listen(ctx, "127.0.0.1:6666", s)
+		err := web.Listen(ctx, "127.0.0.1:8080", s)
 		if err != nil {
 			log.Println(err)
 		}
