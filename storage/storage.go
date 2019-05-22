@@ -1,6 +1,13 @@
 package storage
 
-import "log"
+import (
+	"context"
+	"encoding/json"
+	"io/ioutil"
+	"log"
+	"os"
+	"sync"
+)
 
 // DataPoints stores ordered by timestamp collection of Datapoint
 type DataPoints []*DataPoint
@@ -13,13 +20,39 @@ type DataPoint struct {
 
 // Storager is a generic interface for timesereas data storages
 type Storager interface {
-	InsertDataPoint(string, DataPoint) bool
+	InsertDataPoint(string, DataPoint) error
+	Close() error
 }
 
-// NewStorage ...
-func NewStorage(t string) *HashmapStorage {
+// NewStorage creates new inmemory storage
+func NewStorage(ctx context.Context, t string, wg *sync.WaitGroup) *HashmapStorage {
 	log.Printf("Storage type: %s", t)
-	return &HashmapStorage{
+	wg.Add(1)
+	s := &HashmapStorage{
 		s: make(map[string]DataPoints),
 	}
+	go func() {
+		<-ctx.Done()
+		if err := s.Close(); err != nil {
+			log.Println(err)
+		}
+		wg.Done()
+	}()
+	s.Lock()
+	defer s.Unlock()
+	log.Println("Looking for snapshots...")
+	fd, err := os.Open("/tmp/mg-snap")
+	if err != nil {
+		log.Printf("Could not load snapshot. Reason: %s", err.Error())
+		log.Println("inmemory storage empty")
+		return s
+	}
+	bSnapshot, err := ioutil.ReadAll(fd)
+	if err != nil {
+		log.Printf("Could not load snapshot. Reason: %s", err.Error())
+		log.Println("inmemory storage empty")
+		return s
+	}
+	json.Unmarshal(bSnapshot, s.s)
+	return s
 }

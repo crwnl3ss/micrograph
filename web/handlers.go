@@ -10,6 +10,8 @@ import (
 	"github.com/crwnl3ss/micrograph/storage"
 )
 
+var startTime = time.Now()
+
 // SearchRequest ...
 type SearchRequest struct {
 	Target string `json:"target,omitempty"`
@@ -96,37 +98,44 @@ type QueryRequest struct {
 	Targets []QueryTarget `json:"targets"`
 }
 
+// query request for grafana simple json datasource
 func query(s *storage.HashmapStorage) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" {
-			w.WriteHeader(http.StatusBadRequest)
+		if r.Method == "GET" {
+			// in debug purpuses
+			targets := s.GetGrafanaTargets()
+			queries := s.GetGrafanaQuery(startTime.Unix(), time.Now().Unix(), targets)
+			b, err := json.Marshal(queries)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			w.Write(b)
+			w.Header().Add("Content-Type", "application/json")
 			return
 		}
-		defer r.Body.Close()
-		reqB, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusBadRequest)
+		if r.Method == "POST" {
+			bReq, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			defer r.Body.Close()
+			qr := &QueryRequest{}
+			if err := json.Unmarshal(bReq, qr); err != nil {
+				log.Fatalln(err)
+			}
+			targets := []string{}
+			for _, target := range qr.Targets {
+				targets = append(targets, target.Target)
+			}
+			queries := s.GetGrafanaQuery(qr.Range.From, qr.Range.To, targets)
+			bRes, err := json.Marshal(queries)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			w.Write(bRes)
+			w.Header().Add("Content-Type", "application/json")
 			return
 		}
-		qr := &QueryRequest{}
-		if err := json.Unmarshal(reqB, qr); err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		targets := []string{}
-		for _, target := range qr.Targets {
-			targets = append(targets, target.Target)
-		}
-		queries := s.GetGrafanaQuery(qr.Range.From, qr.Range.To, targets)
-		log.Println(queries)
-		json.Marshal(queries)
-		resB, err := json.Marshal(queries)
-		if err != nil {
-			log.Println(err)
-		}
-		w.Write(resB)
-		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }

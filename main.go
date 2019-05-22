@@ -12,8 +12,6 @@ import (
 	"github.com/crwnl3ss/micrograph/web"
 )
 
-var s = storage.NewStorage("hashmap")
-
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -24,7 +22,8 @@ func main() {
 		cancel()
 	}()
 
-	wg := sync.WaitGroup{}
+	wg := &sync.WaitGroup{}
+	s := storage.NewStorage(ctx, "inmemory", wg)
 	go func() {
 		wg.Add(1)
 		err := receiver.Listen(ctx, "127.0.0.1:8000", s)

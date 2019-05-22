@@ -1,12 +1,18 @@
 package storage
 
 import (
+	"context"
+	"sync"
 	"testing"
 	"time"
 )
 
 func TestGetGrafanaQuery(t *testing.T) {
-	s := NewStorage("hashmap")
+	wg := new(sync.WaitGroup)
+	ctx, ctxCancelFn := context.WithCancel(context.Background())
+	defer wg.Wait()
+	defer ctxCancelFn()
+	s := NewStorage(ctx, "hashmap", wg)
 	s.s["a.b.c"] = DataPoints{
 		&DataPoint{
 			TS:   time.Date(2019, 1, 1, 10, 0, 0, 0, time.UTC).Unix(),
@@ -46,7 +52,13 @@ func TestGetGrafanaQuery(t *testing.T) {
 }
 
 func TestGetGrafanaTargets(t *testing.T) {
-	s := NewStorage("hashmap")
+	wg := new(sync.WaitGroup)
+	ctx, ctxCancelFn := context.WithCancel(context.Background())
+	defer wg.Wait()
+	defer ctxCancelFn()
+
+	s := NewStorage(ctx, "hashmap", wg)
+
 	s.s["a"] = DataPoints{
 		&DataPoint{2, 2.0},
 		&DataPoint{4, 2.2},

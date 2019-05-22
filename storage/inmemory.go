@@ -1,8 +1,10 @@
 package storage
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"sync"
 )
 
@@ -10,6 +12,27 @@ import (
 type HashmapStorage struct {
 	sync.Mutex
 	s map[string]DataPoints
+}
+
+// Close creates snapshot of curret inmemory storage (at least tryes...)
+func (s *HashmapStorage) Close() error {
+	s.Lock()
+	defer s.Unlock()
+	log.Println("Creating snapshot...")
+	fd, err := os.Create("/tmp/mg-snap")
+	if err != nil {
+		return err
+	}
+	bSnapshot, err := json.Marshal(s.s)
+	if err != nil {
+		return err
+	}
+	n, err := fd.Write(bSnapshot)
+	if err != nil {
+		return err
+	}
+	log.Printf("Snapshot created. Size %d", n)
+	return nil
 }
 
 // GetGrafanaTargets ...
@@ -55,7 +78,7 @@ func (s *HashmapStorage) GetGrafanaQuery(from, to int64, targets []string) []Gra
 
 // InsertDataPoint add passed DataPoint into target's timeserease data
 func (s *HashmapStorage) InsertDataPoint(target string, dp *DataPoint) error {
-	log.Println("invoke with:", target, dp)
+	log.Printf("Insert %v into target %s", dp, target)
 	s.Lock()
 	defer s.Unlock()
 	datapoints, ok := s.s[target]
