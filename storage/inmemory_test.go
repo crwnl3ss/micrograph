@@ -29,18 +29,25 @@ func TestInsertDataPoint(t *testing.T) {
 	if err := s.InsertDataPoint(firstT, firstTsecondDP); err != nil {
 		t.Errorf("could not insert %v", firstTsecondDP)
 	}
+	secondT := "d.c.b.a"
 	secondTfirstDP := &DataPoint{
 		TS:   time.Date(2019, 1, 1, 10, 0, 15, 0, time.UTC).Unix(),
 		Data: 0.01,
 	}
-	if err := s.InsertDataPoint("d.c.b.a", secondTfirstDP); err != nil {
+	if err := s.InsertDataPoint(secondT, secondTfirstDP); err != nil {
 		t.Errorf("could not insert %v", secondTfirstDP)
 	}
 	if len(s.s[firstT]) != 2 {
-		t.Errorf("`%s` target: wromg number of datapoints: %d", firstT, len(s.s["a.a"]))
+		t.Errorf("`%s` target: wromg number of datapoints: %d", firstT, len(s.s[firstT]))
 	}
 	if s.s[firstT][0] != firstTfirstDP || s.s[firstT][1] != firstTsecondDP {
 		t.Errorf("`%s` target: invalid datapoints: %v %v", firstT, firstTfirstDP, firstTsecondDP)
+	}
+	if len(s.s[secondT]) != 1 {
+		t.Errorf("`%s` target: wromg number of datapoints: %d", secondT, len(s.s[secondT]))
+	}
+	if s.s[secondT][0] != secondTfirstDP {
+		t.Errorf("`%s` target: invalid datapoint: %v", secondT, secondTfirstDP)
 	}
 }
 
