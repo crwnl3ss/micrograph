@@ -99,6 +99,7 @@ func (s *HashmapStorage) InsertDataPoint(target string, dp *DataPoint) error {
 	if datapoints[len(datapoints)-1].TS < dp.TS {
 		log.Printf("insert %v into target %s", dp, target)
 		datapoints = append(datapoints, dp)
+		s.s[target] = datapoints
 		return nil
 	}
 	// otherwise use binary search for new Datapoint
