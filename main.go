@@ -12,6 +12,9 @@ import (
 	"github.com/crwnl3ss/micrograph/web"
 )
 
+var udpladdr = "127.0.0.1:6667"
+var httpladdr = "127.0.0.1:6666"
+
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -26,7 +29,7 @@ func main() {
 	s := storage.NewStorage(ctx, "inmemory", wg)
 	go func() {
 		wg.Add(1)
-		err := receiver.Listen(ctx, "127.0.0.1:8000", s)
+		err := receiver.Listen(ctx, udpladdr, s)
 		if err != nil {
 			log.Println(err)
 		}
@@ -34,12 +37,12 @@ func main() {
 	}()
 	go func() {
 		wg.Add(1)
-		err := web.Listen(ctx, "127.0.0.1:8080", s)
+		err := web.Listen(ctx, httpladdr, s)
 		if err != nil {
 			log.Println(err)
 		}
 		wg.Done()
 	}()
-	log.Println("wait...")
+	log.Println("ready to serve <3")
 	wg.Wait()
 }
