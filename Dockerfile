@@ -11,3 +11,4 @@ FROM alpine3.9
 COPY --from=base /tmp/micrograph/micrograph /opt/micrograph/app
 
 EXPOSE 6666/tcp 6665/udp
+

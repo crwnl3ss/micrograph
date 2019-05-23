@@ -29,8 +29,11 @@ func NewStorage(ctx context.Context, t string, wg *sync.WaitGroup) *HashmapStora
 	log.Printf("Storage type: %s", t)
 	wg.Add(1)
 	s := &HashmapStorage{
-		s: make(map[string]DataPoints),
+		s:                make(map[string]DataPoints),
+		snapshotFilePath: "./mg.snapshot",
 	}
+	s.Lock()
+	defer s.Unlock()
 	go func() {
 		<-ctx.Done()
 		if err := s.Close(); err != nil {
@@ -38,13 +41,11 @@ func NewStorage(ctx context.Context, t string, wg *sync.WaitGroup) *HashmapStora
 		}
 		wg.Done()
 	}()
-	s.Lock()
-	defer s.Unlock()
 	log.Println("Looking for snapshots...")
-	fd, err := os.Open("/tmp/mg-snap")
+	fd, err := os.Open(s.snapshotFilePath)
 	if err != nil {
 		log.Printf("Could not load snapshot. Reason: %s", err.Error())
-		log.Println("inmemory storage empty")
+		log.Println("inmemory storage will be empty")
 		return s
 	}
 	bSnapshot, err := ioutil.ReadAll(fd)

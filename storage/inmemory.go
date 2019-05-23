@@ -11,7 +11,8 @@ import (
 // HashmapStorage ...
 type HashmapStorage struct {
 	sync.Mutex
-	s map[string]DataPoints
+	s                map[string]DataPoints
+	snapshotFilePath string
 }
 
 // Close creates snapshot of curret inmemory storage (at least tryes...)
@@ -19,7 +20,7 @@ func (s *HashmapStorage) Close() error {
 	s.Lock()
 	defer s.Unlock()
 	log.Println("Creating snapshot...")
-	fd, err := os.Create("/tmp/mg-snap")
+	fd, err := os.Create(s.snapshotFilePath)
 	if err != nil {
 		return err
 	}
