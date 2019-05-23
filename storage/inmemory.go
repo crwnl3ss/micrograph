@@ -13,13 +13,18 @@ type HashmapStorage struct {
 	sync.Mutex
 	s                map[string]DataPoints
 	snapshotFilePath string
+	snapshotEnable   bool
 }
 
 // Close creates snapshot of curret inmemory storage (at least tryes...)
 func (s *HashmapStorage) Close() error {
+	if !s.snapshotEnable {
+		log.Println("snapshot load/dump disable")
+		return nil
+	}
 	s.Lock()
 	defer s.Unlock()
-	log.Println("Creating snapshot...")
+	log.Printf("try to create %s", s.snapshotFilePath)
 	fd, err := os.Create(s.snapshotFilePath)
 	if err != nil {
 		return err
