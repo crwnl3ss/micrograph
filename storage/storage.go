@@ -54,6 +54,10 @@ func NewStorage(ctx context.Context, t string, wg *sync.WaitGroup) *HashmapStora
 		log.Println("inmemory storage empty")
 		return s
 	}
-	json.Unmarshal(bSnapshot, s.s)
+	if err := json.Unmarshal(bSnapshot, &s.s); err != nil {
+		log.Printf("could not deserialize %s file. Reason %s", s.snapshotFilePath, err)
+		return s
+	}
+	log.Println("Snapshot succsessful load")
 	return s
 }

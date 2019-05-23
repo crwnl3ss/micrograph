@@ -32,7 +32,7 @@ func (s *HashmapStorage) Close() error {
 	if err != nil {
 		return err
 	}
-	log.Printf("Snapshot created. Size %d", n)
+	log.Printf("snapshot created, size %d", n)
 	return nil
 }
 
@@ -79,7 +79,6 @@ func (s *HashmapStorage) GetGrafanaQuery(from, to int64, targets []string) []Gra
 
 // InsertDataPoint add passed DataPoint into target's timeserease data
 func (s *HashmapStorage) InsertDataPoint(target string, dp *DataPoint) error {
-	log.Printf("Insert %v into target %s", dp, target)
 	s.Lock()
 	defer s.Unlock()
 	datapoints, ok := s.s[target]
@@ -92,6 +91,7 @@ func (s *HashmapStorage) InsertDataPoint(target string, dp *DataPoint) error {
 	}
 	// Datapoins ordered by `ts`, try to add new one at the end
 	if datapoints[len(datapoints)-1].TS < dp.TS {
+		log.Printf("insert %v into target %s", dp, target)
 		datapoints = append(datapoints, dp)
 		return nil
 	}
