@@ -38,12 +38,12 @@ func NewStorage(ctx context.Context, t string, wg *sync.WaitGroup) *HashmapStora
 	go func() {
 		<-ctx.Done()
 		if err := s.Close(); err != nil {
-			log.Println(err)
+			log.Printf("could not properly close storage, reason: %s", err)
 		}
 		wg.Done()
 	}()
 	if !s.snapshotEnable {
-		log.Println("snapshot load/dump disable")
+		log.Println("snapshot load/dump disabled")
 		return s
 	}
 	log.Println("looking for prevous snapshot...")

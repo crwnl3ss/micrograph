@@ -8,7 +8,7 @@ import (
 	"sync"
 )
 
-// HashmapStorage ...
+// HashmapStorage is a simple inmemory storage
 type HashmapStorage struct {
 	sync.Mutex
 	s                map[string]DataPoints
@@ -16,10 +16,11 @@ type HashmapStorage struct {
 	snapshotEnable   bool
 }
 
-// Close creates snapshot of curret inmemory storage (at least tryes...)
+// Close creates snapshot of inmemory storage state
+// This process could be skipped with `snapshotEnable=false` flag
 func (s *HashmapStorage) Close() error {
 	if !s.snapshotEnable {
-		log.Println("snapshot load/dump disable")
+		log.Println("snapshot dump disabled")
 		return nil
 	}
 	s.Lock()
