@@ -49,6 +49,38 @@ func TestInsertDataPoint(t *testing.T) {
 	if s.s[secondT][0] != secondTfirstDP {
 		t.Errorf("`%s` target: invalid datapoint: %v", secondT, secondTfirstDP)
 	}
+
+	firstTthirdDP := &DataPoint{
+		TS:   time.Date(2019, 1, 1, 10, 0, 40, 0, time.UTC).Unix(),
+		Data: 0.01,
+	}
+	if err := s.InsertDataPoint(firstT, firstTthirdDP); err != nil {
+		t.Errorf("could not insert %v", firstTthirdDP)
+	}
+
+	firstTsecondAndHalfDP := &DataPoint{
+		TS:   time.Date(2019, 1, 1, 10, 0, 20, 0, time.UTC).Unix(),
+		Data: 2.5,
+	}
+	if err := s.InsertDataPoint(firstT, firstTsecondAndHalfDP); err != nil {
+		t.Fatalf(err.Error())
+	}
+	if s.s[firstT][0] != firstTfirstDP && s.s[firstT][1] != firstTsecondDP && s.s[firstT][2] != firstTsecondAndHalfDP && s.s[firstT][3] != firstTthirdDP {
+		t.Errorf("invalid DataPoints order after binary search & insert")
+	}
+
+	firstTsecondAndThreeQUotersDP := &DataPoint{
+		TS:   time.Date(2019, 1, 1, 10, 0, 37, 0, time.UTC).Unix(),
+		Data: 2.5,
+	}
+	if err := s.InsertDataPoint(firstT, firstTsecondAndThreeQUotersDP); err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	if s.s[firstT][0] != firstTfirstDP && s.s[firstT][1] != firstTsecondDP && s.s[firstT][2] != firstTsecondAndHalfDP && s.s[firstT][3] != firstTsecondAndThreeQUotersDP && s.s[firstT][4] != firstTthirdDP {
+		t.Errorf("invalid DataPoints order after binary search & insert")
+	}
+
 }
 
 func TestGetGrafanaQuery(t *testing.T) {

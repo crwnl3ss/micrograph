@@ -2,9 +2,9 @@ package storage
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
+	"sort"
 	"sync"
 )
 
@@ -75,7 +75,7 @@ func (s *HashmapStorage) GetGrafanaQuery(from, to int64, targets []string) []Gra
 		for idx := range datapoints {
 			idxDP := datapoints[idx]
 			if idxDP.TS >= from && idxDP.TS <= to {
-				subQueryResult.DataPoints = append(subQueryResult.DataPoints, []interface{}{idxDP.Data, idxDP.TS*100})
+				subQueryResult.DataPoints = append(subQueryResult.DataPoints, []interface{}{idxDP.Data, idxDP.TS * 1000})
 			}
 		}
 		queryes = append(queryes, subQueryResult)
@@ -102,6 +102,13 @@ func (s *HashmapStorage) InsertDataPoint(target string, dp *DataPoint) error {
 		s.s[target] = datapoints
 		return nil
 	}
-	// otherwise use binary search for new Datapoint
-	return fmt.Errorf("binary search not implemented")
+	// otherwise use binary search to find index
+	idx := sort.Search(len(datapoints), func(i int) bool {
+		return datapoints[i].TS >= dp.TS
+	})
+	datapoints = append(datapoints, &DataPoint{})
+	copy(datapoints[idx+1:], datapoints[idx:])
+	datapoints[idx] = dp
+	s.s[target] = datapoints
+	return nil
 }
