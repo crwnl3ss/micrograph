@@ -12,8 +12,8 @@ import (
 	"github.com/crwnl3ss/micrograph/web"
 )
 
-var udpladdr = "127.0.0.1:6667"
-var httpladdr = "127.0.0.1:6666"
+var udpladdr = "0.0.0.0:6667"
+var httpladdr = "0.0.0.0:6666"
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -27,22 +27,16 @@ func main() {
 
 	wg := &sync.WaitGroup{}
 	s := storage.NewStorage(ctx, "inmemory", wg)
-	go func() {
-		wg.Add(1)
-		err := receiver.Listen(ctx, udpladdr, s)
-		if err != nil {
-			log.Println(err)
-		}
-		wg.Done()
-	}()
-	go func() {
-		wg.Add(1)
-		err := web.Listen(ctx, httpladdr, s)
-		if err != nil {
-			log.Println(err)
-		}
-		wg.Done()
-	}()
-	log.Println("ready to serve <3")
+
+	err := receiver.Listen(ctx, udpladdr, s, wg)
+	if err != nil {
+		log.Fatalf("udp listner error: %s", err.Error())
+	}
+
+	err = web.Listen(ctx, httpladdr, s, wg)
+	if err != nil {
+		log.Println(err)
+	}
 	wg.Wait()
+	log.Println("stopped")
 }

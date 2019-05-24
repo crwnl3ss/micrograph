@@ -75,7 +75,7 @@ func (s *HashmapStorage) GetGrafanaQuery(from, to int64, targets []string) []Gra
 		for idx := range datapoints {
 			idxDP := datapoints[idx]
 			if idxDP.TS >= from && idxDP.TS <= to {
-				subQueryResult.DataPoints = append(subQueryResult.DataPoints, []interface{}{idxDP.Data, idxDP.TS})
+				subQueryResult.DataPoints = append(subQueryResult.DataPoints, []interface{}{idxDP.Data, idxDP.TS*100})
 			}
 		}
 		queryes = append(queryes, subQueryResult)

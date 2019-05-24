@@ -12,6 +12,11 @@ import (
 
 var startTime = time.Now()
 
+// grafana datasorce index handler
+func index(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte(string("minigraph grafana exporter v0.1")))
+}
+
 // SearchRequest ...
 type SearchRequest struct {
 	Target string `json:"target,omitempty"`
@@ -20,48 +25,34 @@ type SearchRequest struct {
 // SearchResponse ...
 type SearchResponse []string
 
-// grafana datasorce index handler
-func index(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(string("minigraph grafana exporter v0.1")))
-}
-
-// search returns list of xualified endpoint names (full path to the right
-//most namespace)
+// search returns list of grafana targets
 func search(s *storage.HashmapStorage) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
-			b, err := json.Marshal(s.GetGrafanaTargets())
-			if err != nil {
-				log.Println(err)
-				w.WriteHeader(http.StatusBadRequest)
-			}
-			w.Write(b)
+		if r.Method != "POST" {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
+		sReq := &SearchRequest{}
+		defer r.Body.Close()
+		b, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		if r.Method == "POST" {
-			sReq := &SearchRequest{}
-			defer r.Body.Close()
-			b, err := ioutil.ReadAll(r.Body)
-			if err != nil {
-				log.Println(err)
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-			if err := json.Unmarshal(b, sReq); err != nil {
-				log.Println(err)
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-			log.Println(sReq.Target)
-			var sRes SearchResponse = s.GetGrafanaTargets()
-			br, err := json.Marshal(sRes)
-			if err != nil {
-				w.Write([]byte(err.Error()))
-				w.WriteHeader(http.StatusBadGateway)
-			}
-			w.Write(br)
-			w.Header().Add("Content-Type", "application/json")
+		if err := json.Unmarshal(b, sReq); err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
 		}
+		log.Println(sReq.Target)
+		var sRes SearchResponse = s.GetGrafanaTargets()
+		br, err := json.Marshal(sRes)
+		if err != nil {
+			w.Write([]byte(err.Error()))
+			w.WriteHeader(http.StatusBadGateway)
+		}
+		w.Write(br)
+		w.Header().Add("Content-Type", "application/json")
 	}
 }
 

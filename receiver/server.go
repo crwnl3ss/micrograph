@@ -6,13 +6,15 @@ import (
 	"log"
 	"net"
 	"strings"
+	"sync"
 
 	"github.com/crwnl3ss/micrograph/storage"
 )
 
 // Listen ...
-func Listen(ctx context.Context, laddr string, s *storage.HashmapStorage) error {
-	log.Printf("Listen for incoming udp packages on %s", laddr)
+func Listen(ctx context.Context, laddr string, s *storage.HashmapStorage, wg *sync.WaitGroup) error {
+	wg.Add(1)
+	defer wg.Done()
 	pc, err := net.ListenPacket("udp", laddr)
 	if err != nil {
 		return err
@@ -22,29 +24,33 @@ func Listen(ctx context.Context, laddr string, s *storage.HashmapStorage) error 
 		pc.Close()
 	}()
 	buf := make([]byte, 1024)
-	for {
-		n, addr, err := pc.ReadFrom(buf)
-		if err != nil {
-			if strings.Contains(err.Error(), "use of closed network connection") {
-				log.Println("udp package listener was closed")
-				return nil
-			}
-			return err
-		}
-		go func() {
-			if bytes.Contains(buf, []byte("\n")) {
-				n -= len([]byte("\n"))
-			}
-			t, dp, err := parseUDPRequest(buf[:n])
-			log.Printf("Receive message from %s size %d body: %s", addr, n, buf[:n])
+	go func() {
+		log.Printf("listen udp on: ", laddr)
+		for {
+			n, addr, err := pc.ReadFrom(buf)
 			if err != nil {
-				log.Println(err)
+				if strings.Contains(err.Error(), "use of closed network connection") {
+					log.Println("udp listner closed")
+					return
+				}
 				return
 			}
-			if err := s.InsertDataPoint(t, dp); err != nil {
-				log.Printf("Could not insert datapoint into storage. Reason: %s", err)
-				return
-			}
-		}()
-	}
+			go func() {
+				if bytes.Contains(buf, []byte("\n")) {
+					n -= len([]byte("\n"))
+				}
+				t, dp, err := parseUDPRequest(buf[:n])
+				log.Printf("from: %s size: %d body: %s", addr, n, buf[:n])
+				if err != nil {
+					log.Println(err)
+					return
+				}
+				if err := s.InsertDataPoint(t, dp); err != nil {
+					log.Printf("Could not insert datapoint into storage. Reason: %s", err)
+					return
+				}
+			}()
+		}
+	}()
+	return nil
 }

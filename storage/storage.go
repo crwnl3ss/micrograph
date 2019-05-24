@@ -28,6 +28,7 @@ type Storager interface {
 func NewStorage(ctx context.Context, t string, wg *sync.WaitGroup) *HashmapStorage {
 	log.Printf("storage type: %s", t)
 	wg.Add(1)
+	// defer wg.Done()
 	s := &HashmapStorage{
 		s:                make(map[string]DataPoints),
 		snapshotFilePath: "./mg.snapshot",
