@@ -11,7 +11,8 @@ import (
 	"github.com/crwnl3ss/micrograph/storage"
 )
 
-// Listen ...
+// Listen udp packages on passed laddr, process with `parseUDPRequest` and
+// save with `InsertDataPoint`
 func Listen(ctx context.Context, laddr string, s *storage.HashmapStorage, wg *sync.WaitGroup) error {
 	wg.Add(1)
 	defer wg.Done()
@@ -25,7 +26,7 @@ func Listen(ctx context.Context, laddr string, s *storage.HashmapStorage, wg *sy
 	}()
 	buf := make([]byte, 1024)
 	go func() {
-		log.Printf("listen udp on: ", laddr)
+		log.Printf("listen udp on: %s", laddr)
 		for {
 			n, addr, err := pc.ReadFrom(buf)
 			if err != nil {
