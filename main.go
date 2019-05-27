@@ -26,7 +26,7 @@ func main() {
 	}()
 
 	wg := &sync.WaitGroup{}
-	s := storage.NewStorage(ctx, "inmemory", wg)
+	s := storage.GetStorageByType(ctx, "inmemory", wg)
 
 	err := receiver.Listen(ctx, udpladdr, s, wg)
 	if err != nil {

@@ -13,7 +13,7 @@ import (
 
 // Listen udp packages on passed laddr, process with `parseUDPRequest` and
 // save with `InsertDataPoint`
-func Listen(ctx context.Context, laddr string, s *storage.HashmapStorage, wg *sync.WaitGroup) error {
+func Listen(ctx context.Context, laddr string, s storage.Storage, wg *sync.WaitGroup) error {
 	wg.Add(1)
 	defer wg.Done()
 	pc, err := net.ListenPacket("udp", laddr)

@@ -26,7 +26,7 @@ type SearchRequest struct {
 type SearchResponse []string
 
 // search returns list of grafana targets
-func search(s *storage.HashmapStorage) func(http.ResponseWriter, *http.Request) {
+func search(s storage.Storage) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -90,7 +90,7 @@ type QueryRequest struct {
 }
 
 // query request for grafana simple json datasource
-func query(s *storage.HashmapStorage) func(http.ResponseWriter, *http.Request) {
+func query(s storage.Storage) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
 			// in debug purpuses

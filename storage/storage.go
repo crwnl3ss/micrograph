@@ -2,10 +2,7 @@ package storage
 
 import (
 	"context"
-	"encoding/json"
-	"io/ioutil"
 	"log"
-	"os"
 	"sync"
 )
 
@@ -18,50 +15,17 @@ type DataPoint struct {
 	Data float64
 }
 
-// Storager is a generic interface for timesereas data storages
-type Storager interface {
-	InsertDataPoint(string, DataPoint) error
+// Storage is a generic interface for timesereas data storages
+type Storage interface {
+	InsertDataPoint(string, *DataPoint) error
 	Close() error
 }
 
-// NewStorage creates new inmemory storage
-func NewStorage(ctx context.Context, t string, wg *sync.WaitGroup) *HashmapStorage {
+// GetStorageByType ...
+func GetStorageByType(ctx context.Context, t string, wg *sync.WaitGroup) Storage {
 	log.Printf("storage type: %s", t)
-	wg.Add(1)
-	// defer wg.Done()
-	s := &HashmapStorage{
-		s:                make(map[string]DataPoints),
-		snapshotFilePath: "./mg.snapshot",
-		snapshotEnable:   true,
+	if t == "inmemory" {
+		return NewInMemoryStorage(ctx, wg)
 	}
-	s.Lock()
-	defer s.Unlock()
-	go func() {
-		<-ctx.Done()
-		if err := s.Close(); err != nil {
-			log.Printf("could not properly close storage, reason: %s", err)
-		}
-		wg.Done()
-	}()
-	if !s.snapshotEnable {
-		log.Println("snapshot load/dump disabled")
-		return s
-	}
-	log.Println("looking for prevous snapshot...")
-	fd, err := os.Open(s.snapshotFilePath)
-	if err != nil {
-		log.Printf("could not open %s, reason: %s", s.snapshotFilePath, err.Error())
-		return s
-	}
-	bSnapshot, err := ioutil.ReadAll(fd)
-	if err != nil {
-		log.Printf("could not read %s, reason: %s", s.snapshotFilePath, err.Error())
-		return s
-	}
-	if err := json.Unmarshal(bSnapshot, &s.s); err != nil {
-		log.Printf("could not deserialize %s file, reason %s", s.snapshotFilePath, err)
-		return s
-	}
-	log.Println("snapshot succsessful load <3")
-	return s
+	return nil
 }

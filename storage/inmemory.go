@@ -1,7 +1,9 @@
 package storage
 
 import (
+	"context"
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"os"
 	"sort"
@@ -14,6 +16,46 @@ type HashmapStorage struct {
 	s                map[string]DataPoints
 	snapshotFilePath string
 	snapshotEnable   bool
+}
+
+// NewInMemoryStorage ...
+func NewInMemoryStorage(ctx context.Context, wg *sync.WaitGroup) Storage {
+	wg.Add(1)
+	s := &HashmapStorage{
+		s:                make(map[string]DataPoints),
+		snapshotFilePath: "./mg.snapshot",
+		snapshotEnable:   true,
+	}
+	s.Lock()
+	defer s.Unlock()
+	go func() {
+		<-ctx.Done()
+		if err := s.Close(); err != nil {
+			log.Printf("could not properly close storage, reason: %s", err)
+		}
+		wg.Done()
+	}()
+	if !s.snapshotEnable {
+		log.Println("snapshot load/dump disabled")
+		return s
+	}
+	log.Println("looking for prevous snapshot...")
+	fd, err := os.Open(s.snapshotFilePath)
+	if err != nil {
+		log.Printf("could not open %s, reason: %s", s.snapshotFilePath, err.Error())
+		return s
+	}
+	bSnapshot, err := ioutil.ReadAll(fd)
+	if err != nil {
+		log.Printf("could not read %s, reason: %s", s.snapshotFilePath, err.Error())
+		return s
+	}
+	if err := json.Unmarshal(bSnapshot, &s.s); err != nil {
+		log.Printf("could not deserialize %s file, reason %s", s.snapshotFilePath, err)
+		return s
+	}
+	log.Println("snapshot succsessful load <3")
+	return s
 }
 
 // Close creates snapshot of inmemory storage state
