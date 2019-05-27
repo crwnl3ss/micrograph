@@ -18,6 +18,8 @@ type DataPoint struct {
 // Storage is a generic interface for timesereas data storages
 type Storage interface {
 	InsertDataPoint(string, *DataPoint) error
+	GetGrafanaTargets() []string
+	GetGrafanaQuery(int64, int64, []string) []GrafanaQueryResult
 	Close() error
 }
 

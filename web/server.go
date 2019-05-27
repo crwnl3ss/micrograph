@@ -10,7 +10,7 @@ import (
 )
 
 // Listen accept incoming http requests
-func Listen(ctx context.Context, laddr string, s storage.HashmapStorage, wg *sync.WaitGroup) error {
+func Listen(ctx context.Context, laddr string, s storage.Storage, wg *sync.WaitGroup) error {
 	wg.Add(1)
 	defer wg.Done()
 
