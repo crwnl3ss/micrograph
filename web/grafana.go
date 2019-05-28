@@ -45,7 +45,7 @@ func search(s storage.Storage) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 		log.Println(sReq.Target)
-		var sRes SearchResponse = s.GetGrafanaTargets()
+		var sRes SearchResponse = s.GetKeys()
 		br, err := json.Marshal(sRes)
 		if err != nil {
 			w.Write([]byte(err.Error()))
@@ -94,8 +94,8 @@ func query(s storage.Storage) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
 			// in debug purpuses
-			targets := s.GetGrafanaTargets()
-			queries := s.GetGrafanaQuery(startTime.Unix(), time.Now().Unix(), targets)
+			targets := s.GetKeys()
+			queries := s.RangeQuery(startTime.Unix(), time.Now().Unix(), targets)
 			b, err := json.Marshal(queries)
 			if err != nil {
 				log.Fatalln(err)
@@ -118,7 +118,7 @@ func query(s storage.Storage) func(http.ResponseWriter, *http.Request) {
 			for _, target := range qr.Targets {
 				targets = append(targets, target.Target)
 			}
-			queries := s.GetGrafanaQuery(qr.Range.From, qr.Range.To, targets)
+			queries := s.RangeQuery(qr.Range.From, qr.Range.To, targets)
 			bRes, err := json.Marshal(queries)
 			if err != nil {
 				log.Fatalln(err)

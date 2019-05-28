@@ -19,12 +19,12 @@ type HashmapStorage struct {
 }
 
 // NewInMemoryStorage ...
-func NewInMemoryStorage(ctx context.Context, wg *sync.WaitGroup) Storage {
+func NewInMemoryStorage(ctx context.Context, wg *sync.WaitGroup, snapEnable bool) Storage {
 	wg.Add(1)
 	s := &HashmapStorage{
 		s:                make(map[string]DataPoints),
 		snapshotFilePath: "./mg.snapshot",
-		snapshotEnable:   true,
+		snapshotEnable:   snapEnable,
 	}
 	s.Lock()
 	defer s.Unlock()
@@ -84,8 +84,8 @@ func (s *HashmapStorage) Close() error {
 	return nil
 }
 
-// GetGrafanaTargets ...
-func (s *HashmapStorage) GetGrafanaTargets() []string {
+// GetKeys ...
+func (s *HashmapStorage) GetKeys() []string {
 	s.Lock()
 	targets := []string{}
 	for k := range s.s {
@@ -97,15 +97,9 @@ func (s *HashmapStorage) GetGrafanaTargets() []string {
 	return targets
 }
 
-// GrafanaQueryResult ...
-type GrafanaQueryResult struct {
-	Target     string          `json:"target"`
-	DataPoints [][]interface{} `json:"datapoints"`
-}
-
-// GetGrafanaQuery ...
-func (s *HashmapStorage) GetGrafanaQuery(from, to int64, targets []string) []GrafanaQueryResult {
-	queryes := []GrafanaQueryResult{}
+// RangeQuery ...
+func (s *HashmapStorage) RangeQuery(from, to int64, targets []string) []RangeQueryResult {
+	queryes := []RangeQueryResult{}
 	s.Lock()
 	defer s.Unlock()
 	for _, target := range targets {
@@ -113,11 +107,11 @@ func (s *HashmapStorage) GetGrafanaQuery(from, to int64, targets []string) []Gra
 		if !ok {
 			continue
 		}
-		subQueryResult := GrafanaQueryResult{Target: target, DataPoints: [][]interface{}{}}
+		subQueryResult := RangeQueryResult{Target: target, DataPoints: []*DataPoint{}}
 		for idx := range datapoints {
 			idxDP := datapoints[idx]
 			if idxDP.TS >= from && idxDP.TS <= to {
-				subQueryResult.DataPoints = append(subQueryResult.DataPoints, []interface{}{idxDP.Data, idxDP.TS * 1000})
+				subQueryResult.DataPoints = append(subQueryResult.DataPoints, idxDP)
 			}
 		}
 		queryes = append(queryes, subQueryResult)

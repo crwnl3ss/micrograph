@@ -15,11 +15,18 @@ type DataPoint struct {
 	Data float64
 }
 
+// RangeQueryResult ...
+// TODO: serialize for grafana correctrly
+type RangeQueryResult struct {
+	Target     string       `json:"target"`
+	DataPoints []*DataPoint `json:"datapoints"`
+}
+
 // Storage is a generic interface for timesereas data storages
 type Storage interface {
 	InsertDataPoint(string, *DataPoint) error
-	GetGrafanaTargets() []string
-	GetGrafanaQuery(int64, int64, []string) []GrafanaQueryResult
+	GetKeys() []string
+	RangeQuery(int64, int64, []string) []RangeQueryResult
 	Close() error
 }
 
@@ -27,7 +34,7 @@ type Storage interface {
 func GetStorageByType(ctx context.Context, t string, wg *sync.WaitGroup) Storage {
 	log.Printf("storage type: %s", t)
 	if t == "inmemory" {
-		return NewInMemoryStorage(ctx, wg)
+		return NewInMemoryStorage(ctx, wg, true)
 	}
 	return nil
 }
