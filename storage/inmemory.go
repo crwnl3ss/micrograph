@@ -99,7 +99,7 @@ func (s *HashmapStorage) GetKeys() []string {
 
 // RangeQuery ...
 func (s *HashmapStorage) RangeQuery(from, to int64, targets []string) []RangeQueryResult {
-	queryes := []RangeQueryResult{}
+	queryesResult := []RangeQueryResult{}
 	s.Lock()
 	defer s.Unlock()
 	for _, target := range targets {
@@ -114,9 +114,9 @@ func (s *HashmapStorage) RangeQuery(from, to int64, targets []string) []RangeQue
 				subQueryResult.DataPoints = append(subQueryResult.DataPoints, idxDP)
 			}
 		}
-		queryes = append(queryes, subQueryResult)
+		queryesResult = append(queryesResult, subQueryResult)
 	}
-	return queryes
+	return queryesResult
 }
 
 // InsertDataPoint add passed DataPoint into target's timeserease data

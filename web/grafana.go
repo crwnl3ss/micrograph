@@ -92,34 +92,39 @@ type QueryRequest struct {
 // query request for grafana simple json datasource
 func query(s storage.Storage) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
-			// in debug purpuses
-			targets := s.GetKeys()
-			queries := s.RangeQuery(startTime.Unix(), time.Now().Unix(), targets)
-			b, err := json.Marshal(queries)
-			if err != nil {
-				log.Fatalln(err)
-			}
-			w.Write(b)
-			w.Header().Add("Content-Type", "application/json")
-			return
-		}
 		if r.Method == "POST" {
 			bReq, err := ioutil.ReadAll(r.Body)
 			if err != nil {
-				log.Fatalln(err)
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte(`could not read request body`))
+				return
 			}
 			defer r.Body.Close()
 			qr := &QueryRequest{}
 			if err := json.Unmarshal(bReq, qr); err != nil {
-				log.Fatalln(err)
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte(`invalid request, valid request example: '{"range": {"from": 1559122100, "to": 1559122424}, "targets": [{"target": "first_target"}]}'`))
+				return
 			}
+			log.Println(qr)
 			targets := []string{}
 			for _, target := range qr.Targets {
 				targets = append(targets, target.Target)
 			}
+			type QueryResponse struct {
+				Target     string
+				Datapoints [][]interface{}
+			}
 			queries := s.RangeQuery(qr.Range.From, qr.Range.To, targets)
-			bRes, err := json.Marshal(queries)
+			response := []*QueryResponse{}
+			for i := range queries {
+				subResponse := &QueryResponse{Target: queries[i].Target, Datapoints: [][]interface{}{}}
+				for j := range queries[i].DataPoints {
+					subResponse.Datapoints = append(subResponse.Datapoints, []interface{}{queries[i].DataPoints[j].Data, queries[i].DataPoints[j].TS * 1000}) // gtafana expect ts in milliseconds
+				}
+				response = append(response, subResponse)
+			}
+			bRes, err := json.Marshal(response)
 			if err != nil {
 				log.Fatalln(err)
 			}

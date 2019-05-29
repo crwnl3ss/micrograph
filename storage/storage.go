@@ -16,7 +16,6 @@ type DataPoint struct {
 }
 
 // RangeQueryResult ...
-// TODO: serialize for grafana correctrly
 type RangeQueryResult struct {
 	Target     string       `json:"target"`
 	DataPoints []*DataPoint `json:"datapoints"`
