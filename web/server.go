@@ -21,7 +21,7 @@ func Listen(ctx context.Context, laddr string, s storage.Storage, wg *sync.WaitG
 		srv.Close()
 	}()
 
-	http.HandleFunc("/", index)
+	http.HandleFunc("/", index(s))
 	http.HandleFunc("/search", search(s))
 	http.HandleFunc("/query", query(s))
 

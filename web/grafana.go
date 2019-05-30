@@ -2,6 +2,7 @@ package web
 
 import (
 	"encoding/json"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,9 +13,24 @@ import (
 
 var startTime = time.Now()
 
-// grafana datasorce index handler
-func index(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(string("minigraph grafana exporter v0.1")))
+type indexPage struct {
+	Uptime    string
+	Version   string
+	KeysCount int
+}
+
+func index(s storage.Storage) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tpl, err := template.ParseFiles("./web/index.html")
+		if err != nil {
+			log.Fatalln(err)
+		}
+		tpl.Execute(w, indexPage{
+			Uptime:    time.Since(startTime).String(),
+			Version:   "0.0.1",
+			KeysCount: len(s.GetKeys()),
+		})
+	}
 }
 
 // SearchRequest ...
