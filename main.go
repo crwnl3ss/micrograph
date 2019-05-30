@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"os"
 	"os/signal"
@@ -12,8 +13,14 @@ import (
 	"github.com/crwnl3ss/micrograph/web"
 )
 
-var udpladdr = "0.0.0.0:6667"
-var httpladdr = "0.0.0.0:6666"
+var udpladdr string
+var httpladdr string
+
+func init() {
+	flag.StringVar(&udpladdr, "udpladdr", "0.0.0.0:6667", "--udpladdr=0.0.0.0:6667")
+	flag.StringVar(&httpladdr, "udpladdr", "0.0.0.0:6667", "--udpladdr=0.0.0.0:6667")
+	flag.Parse()
+}
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
