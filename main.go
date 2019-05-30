@@ -18,7 +18,7 @@ var httpladdr string
 
 func init() {
 	flag.StringVar(&udpladdr, "udpladdr", "0.0.0.0:6667", "--udpladdr=0.0.0.0:6667")
-	flag.StringVar(&httpladdr, "udpladdr", "0.0.0.0:6667", "--udpladdr=0.0.0.0:6667")
+	flag.StringVar(&httpladdr, "httpladdr", "0.0.0.0:6666", "--httpladdr=0.0.0.0:6666")
 	flag.Parse()
 }
 
