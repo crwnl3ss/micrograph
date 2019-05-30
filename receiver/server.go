@@ -25,6 +25,7 @@ func Listen(ctx context.Context, laddr string, s storage.Storage, wg *sync.WaitG
 		pc.Close()
 	}()
 	buf := make([]byte, 1024)
+	// listen incoming UDP packages in single goroutine
 	go func() {
 		log.Printf("listen udp on: %s", laddr)
 		for {
@@ -37,18 +38,17 @@ func Listen(ctx context.Context, laddr string, s storage.Storage, wg *sync.WaitG
 				return
 			}
 			go func() {
-				if bytes.Contains(buf, []byte("\n")) {
-					n -= len([]byte("\n"))
-				}
-				t, dp, err := parseUDPRequest(buf[:n])
-				log.Printf("from: %s size: %d body: %s", addr, n, buf[:n])
-				if err != nil {
-					log.Println(err)
-					return
-				}
-				if err := s.InsertDataPoint(t, dp); err != nil {
-					log.Printf("Could not insert datapoint into storage. Reason: %s", err)
-					return
+				for _, message := range bytes.Split(buf[:n], []byte("\n")) {
+					log.Printf("from: %s size: %d body: %s", addr, n, buf[:n])
+					t, dp, err := parseUDPRequest(message)
+					if err != nil {
+						log.Println(err)
+						return
+					}
+					if err := s.InsertDataPoint(t, dp); err != nil {
+						log.Printf("could not insert datapoint into storage %s", err)
+						return
+					}
 				}
 			}()
 		}
