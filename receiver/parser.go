@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	metaDelimiter   = []byte(" ")
-	spacesDelimiter = []byte(".")
+	bSpace = []byte(" ")
+	bDot   = []byte(".")
 )
 
 type parsedPackage struct {
@@ -20,7 +20,7 @@ type parsedPackage struct {
 }
 
 func parseUDPRequest(b []byte) (string, *storage.DataPoint, error) {
-	bs := bytes.Split(b, metaDelimiter)
+	bs := bytes.Split(b, bSpace)
 	if len(bs) < 3 {
 		return "", nil, fmt.Errorf("invalid arguments count")
 	}
@@ -29,8 +29,8 @@ func parseUDPRequest(b []byte) (string, *storage.DataPoint, error) {
 	if err != nil {
 		return "", nil, fmt.Errorf("could not parse metric")
 	}
-
-	timestamp, err := strconv.ParseInt(string(bs[2]), 10, 64)
+	// truncate all numbers aftert `.` in timestamp
+	timestamp, err := strconv.ParseInt(string(bytes.Split(bs[2], bDot)[0]), 10, 64)
 	if err != nil {
 		return "", nil, fmt.Errorf("could not parse timestamp")
 	}

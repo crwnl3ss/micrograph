@@ -39,10 +39,10 @@ func Listen(ctx context.Context, laddr string, s storage.Storage, wg *sync.WaitG
 			}
 			go func() {
 				for _, message := range bytes.Split(buf[:n], []byte("\n")) {
-					log.Printf("from: %s size: %d body: %s", addr, n, buf[:n])
+					// log.Printf("from: %s size: %d body: %s", addr, n, buf[:n])
 					t, dp, err := parseUDPRequest(message)
 					if err != nil {
-						log.Println(err)
+						log.Printf("malformed message `%s` from %s, error: %s", buf[:n], addr, err)
 						return
 					}
 					if err := s.InsertDataPoint(t, dp); err != nil {
