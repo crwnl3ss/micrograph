@@ -122,7 +122,6 @@ func query(s storage.Storage) func(http.ResponseWriter, *http.Request) {
 				w.Write([]byte(`invalid request, valid request example: '{"range": {"from": 1559122100, "to": 1559122424}, "targets": [{"target": "first_target"}]}'`))
 				return
 			}
-			log.Println(qr)
 			targets := []string{}
 			for _, target := range qr.Targets {
 				targets = append(targets, target.Target)

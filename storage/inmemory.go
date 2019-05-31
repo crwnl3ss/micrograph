@@ -89,11 +89,9 @@ func (s *HashmapStorage) GetKeys() []string {
 	s.Lock()
 	targets := []string{}
 	for k := range s.s {
-		log.Println(k)
 		targets = append(targets, k)
 	}
 	s.Unlock()
-	log.Println(targets, s.s)
 	return targets
 }
 
@@ -126,8 +124,7 @@ func (s *HashmapStorage) InsertDataPoint(target string, dp *DataPoint) error {
 	datapoints, ok := s.s[target]
 	// there is no datapoints for passed target yet, just create new one
 	if !ok {
-		log.Println(s.s[target])
-		log.Printf("Create new target: %s", target)
+		log.Printf("create key: %s", target)
 		s.s[target] = DataPoints{dp}
 		return nil
 	}
