@@ -7,7 +7,6 @@ RUN echo ${path}
 WORKDIR ${path}
 COPY . ${path}
 RUN CGO_ENABLED=0 go test --count=1 -cover ./... && CGO_ENABLED=0 go build -o ${app_name}
-RUN ls && pwd
 
 FROM alpine:3.9
 LABEL maintainer="metalgearangel@gmail.com"
